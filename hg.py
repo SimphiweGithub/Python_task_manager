@@ -1,11 +1,6 @@
 import datetime
 import json
-import random
 
-
-
-tasks = {}
-hold = []
 
 def deleteTask():
     
@@ -13,8 +8,6 @@ def deleteTask():
         data = json.load(openfile)  
 
     value_to_remove = 1  
-
-    
     updated_data = []
     removed_count = 0
 
@@ -41,26 +34,27 @@ def updateTask():
 
 
     for item in data:
-        if id_to_search_for in item.values():
-          print() 
-
+        for key, value in item.items():
+            if key == "description" and key in item.values():
+                change = input("Update your description")
     updatedAt = datetime.datetime.now()
-    tasks["updatedAt"] = updatedAt
+    #tasks["updatedAt"] = updatedAt
 
 
 def addTask():
+    hold = []
     id= input("What ID do you want to give:")
     description = input("Description of task:")
     status = input("test status:")
     createdAt = str(datetime.datetime.now())
     
-
-    
-    tasks["id"] = id
-    tasks["description"] = description
-    tasks["status"] = status
-    tasks["createdAt"] = createdAt
-    tasks["updatedAt"]  = ""
+    tasks = {
+            "id": id,
+            "description": description,
+            "status": status,
+            "createdAt": createdAt,
+            "updatedAt": ""
+        }
     
     hold.append(tasks) 
     with open("l.json", "w") as file:
@@ -69,9 +63,47 @@ def addTask():
 def listAllTasks():
     with open('l.json', 'r') as openfile:
         data = json.load(openfile)
-        print(data)
-        lm = str(data)
-    lm = str(data).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
-    print(lm)
+    listTaskString = str(data).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
+    print(listTaskString)
 
-listAllTasks()
+def listDoneTasks():
+    DoneTaskList = []
+    with open('l.json', 'r') as openfile:
+        data = json.load(openfile)
+        for item in data:
+            for key, value in item.items():
+                if value == "done" and key =="status":
+                    listTaskString = str(item).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
+                    DoneTaskList.append(listTaskString)
+    if len(DoneTaskList) == 0:
+        print("There are no done tasks")
+    print(DoneTaskList)
+
+def listNotDoneTasks():
+    DoneTaskList = []
+    with open('l.json', 'r') as openfile:
+        data = json.load(openfile)
+        for item in data:
+            for key, value in item.items():
+                if value == "Not Done" and key =="status":
+                    listTaskString = str(item).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
+                    DoneTaskList.append(listTaskString)
+    if len(DoneTaskList) == 0:
+        print("There are no done tasks")
+    print(DoneTaskList)
+
+def listInProgressTasks():
+    DoneTaskList = []
+    with open('l.json', 'r') as openfile:
+        data = json.load(openfile)
+        for item in data:
+            for key, value in item.items():
+                if value == "In Progress" and key =="status":
+                    listTaskString = str(item).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
+                    DoneTaskList.append(listTaskString)
+    if len(DoneTaskList) == 0:
+        print("There are no done tasks")
+    print(DoneTaskList)
+
+    #these functions are used to list all tasks, done tasks, not done tasks, and in progress tasks
+    #I think they could b more efficient ngl
