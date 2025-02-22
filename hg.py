@@ -1,109 +1,283 @@
 import datetime
 import json
+import cmd
 
+class MyCLITaskTracker(cmd.Cmd):
+    prompt = 'task-cli> '
+    intro = 'Welcome to TaskTracker. Type "help" for available commands.'
 
-def deleteTask():
+    def do_quit(self, line):
+        """Exit the CLI."""
+        return True
+
     
-    with open('l.json', 'r') as openfile:
-        data = json.load(openfile)  
+    def do_add(self, line):
+        """
+        Add a new task.
+        Usage: add "Task description" [status]
+        Example: add "Buy groceries" or add "Buy groceries" todo
+        If status is not provided, defaults to 'todo'.
+        """
+        
+        parts = line.split('"')
+        if len(parts) < 3:
+            print('Usage: add "Task description" [status]')
+            return
 
-    value_to_remove = 1  
-    updated_data = []
-    removed_count = 0
-
-    for item in data:
-        if value_to_remove in item.values():
-            removed_count += 1  # Count removed items
+        description = parts[1].strip()
+        
+        remaining = parts[2].strip()
+        if remaining:
+            
+            status = remaining.split()[0]
         else:
-            updated_data.append(item)  # Keep the item if it doesn't match
+            status = "todo"
 
-    if removed_count > 0:
-        print(f"Removed {removed_count} item(s).")
-    else:
-        print(f"No item found with value '{value_to_remove}'.")
+        
+        try:
+            with open("l.json", "r") as file:
+                tasks = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            tasks = []
 
-    # Save the updated JSON data back to the file
-    with open('l.json', 'w') as writefile:
-        json.dump(updated_data, writefile, indent=2)
+        
+        max_id = 0
+        for task in tasks:
+            if "id" in task and isinstance(task["id"], int):
+                if task["id"] > max_id:
+                    max_id = task["id"]
+        new_id = max_id + 1
+        createdAt = str(datetime.datetime.now())
 
-def updateTask():  
-    with open('l.json', 'r') as openfile:
-        data = json.load(openfile)
-        id_to_search_for = input("Enter the task number you want to update:")
-
-
-
-    for item in data:
-        for key, value in item.items():
-            if key == "description" and key in item.values():
-                change = input("Update your description")
-    updatedAt = datetime.datetime.now()
-    #tasks["updatedAt"] = updatedAt
-
-
-def addTask():
-    hold = []
-    id= input("What ID do you want to give:")
-    description = input("Description of task:")
-    status = input("test status:")
-    createdAt = str(datetime.datetime.now())
-    
-    tasks = {
-            "id": id,
+        new_task = {
+            "id": new_id,
             "description": description,
             "status": status,
             "createdAt": createdAt,
             "updatedAt": ""
         }
+        tasks.append(new_task)
+
+        with open("l.json", "w") as file:
+            json.dump(tasks, file, indent=2)
+
+        print(f"Task added successfully (ID: {new_id})")
+
     
-    hold.append(tasks) 
-    with open("l.json", "w") as file:
-        json.dump(hold,file,indent=2)
+    def do_update(self, line):
+        """
+        Update a task's description.
+        Usage: update <id> "New description"
+        Example: update 1 "Buy groceries and cook dinner"
+        """
+        
+        parts = line.split('"')
+        if len(parts) < 3:
+            print('Usage: update <id> "New description"')
+            return
+
+        id_part = parts[0].strip()
+        try:
+            task_id = int(id_part.split()[0])
+        except (ValueError, IndexError):
+            print("Invalid task ID.")
+            return
+
+        new_desc = parts[1].strip()
+
+        try:
+            with open("l.json", "r") as file:
+                tasks = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("No tasks found.")
+            return
+
+        updated = False
+        for task in tasks:
+            if task.get("id") == task_id:
+                task["description"] = new_desc
+                task["updatedAt"] = str(datetime.datetime.now())
+                updated = True
+                break
+
+        if not updated:
+            print(f"No task found with ID {task_id}")
+            return
+
+        with open("l.json", "w") as file:
+            json.dump(tasks, file, indent=2)
+
+        print("Task updated successfully.")
+
     
-def listAllTasks():
-    with open('l.json', 'r') as openfile:
-        data = json.load(openfile)
-    listTaskString = str(data).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
-    print(listTaskString)
+    def do_delete(self, line):
+        """
+        Delete a task.
+        Usage: delete <id>
+        Example: delete 1
+        """
+        id_str = line.strip()
+        if not id_str:
+            print("Usage: delete <id>")
+            return
+        try:
+            task_id = int(id_str)
+        except ValueError:
+            print("Invalid task ID.")
+            return
 
-def listDoneTasks():
-    DoneTaskList = []
-    with open('l.json', 'r') as openfile:
-        data = json.load(openfile)
-        for item in data:
-            for key, value in item.items():
-                if value == "done" and key =="status":
-                    listTaskString = str(item).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
-                    DoneTaskList.append(listTaskString)
-    if len(DoneTaskList) == 0:
-        print("There are no done tasks")
-    print(DoneTaskList)
+        try:
+            with open("l.json", "r") as file:
+                tasks = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("No tasks found.")
+            return
 
-def listNotDoneTasks():
-    DoneTaskList = []
-    with open('l.json', 'r') as openfile:
-        data = json.load(openfile)
-        for item in data:
-            for key, value in item.items():
-                if value == "Not Done" and key =="status":
-                    listTaskString = str(item).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
-                    DoneTaskList.append(listTaskString)
-    if len(DoneTaskList) == 0:
-        print("There are no done tasks")
-    print(DoneTaskList)
+        new_tasks = []
+        deleted = False
+        for task in tasks:
+            if task.get("id") == task_id:
+                deleted = True
+            else:
+                new_tasks.append(task)
 
-def listInProgressTasks():
-    DoneTaskList = []
-    with open('l.json', 'r') as openfile:
-        data = json.load(openfile)
-        for item in data:
-            for key, value in item.items():
-                if value == "In Progress" and key =="status":
-                    listTaskString = str(item).replace("[", "").replace("]", "").replace("'","").replace(",","\n").replace("{", "").replace("}", "")
-                    DoneTaskList.append(listTaskString)
-    if len(DoneTaskList) == 0:
-        print("There are no done tasks")
-    print(DoneTaskList)
+        if not deleted:
+            print(f"No task found with ID {task_id}")
+            return
+
+        with open("l.json", "w") as file:
+            json.dump(new_tasks, file, indent=2)
+        print(f"Task {task_id} deleted successfully.")
+
+    
+    def do_mark_in_progress(self, line):
+        """
+        Mark a task as in-progress.
+        Usage: mark-in-progress <id>
+        Example: mark-in-progress 1
+        """
+        id_str = line.strip()
+        if not id_str:
+            print("Usage: mark-in-progress <id>")
+            return
+        try:
+            task_id = int(id_str)
+        except ValueError:
+            print("Invalid task ID.")
+            return
+
+        try:
+            with open("l.json", "r") as file:
+                tasks = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("No tasks found.")
+            return
+
+        updated = False
+        for task in tasks:
+            if task.get("id") == task_id:
+                task["status"] = "in-progress"
+                task["updatedAt"] = str(datetime.datetime.now())
+                updated = True
+                break
+
+        if not updated:
+            print(f"No task found with ID {task_id}")
+            return
+
+        with open("l.json", "w") as file:
+            json.dump(tasks, file, indent=2)
+        print(f"Task {task_id} marked as in-progress.")
+
+    def do_mark_done(self, line):
+        """
+        Mark a task as done.
+        Usage: mark-done <id>
+        Example: mark-done 1
+        """
+        id_str = line.strip()
+        if not id_str:
+            print("Usage: mark-done <id>")
+            return
+        try:
+            task_id = int(id_str)
+        except ValueError:
+            print("Invalid task ID.")
+            return
+
+        try:
+            with open("l.json", "r") as file:
+                tasks = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("No tasks found.")
+            return
+
+        updated = False
+        for task in tasks:
+            if task.get("id") == task_id:
+                task["status"] = "done"
+                task["updatedAt"] = str(datetime.datetime.now())
+                updated = True
+                break
+
+        if not updated:
+            print(f"No task found with ID {task_id}")
+            return
+
+        with open("l.json", "w") as file:
+            json.dump(tasks, file, indent=2)
+        print(f"Task {task_id} marked as done.")
+
+    
+    def do_list(self, line):
+        """
+        List tasks.
+        Usage:
+          list              -> lists all tasks
+          list <status>     -> lists tasks filtered by status (e.g., list done)
+        """
+        try:
+            with open("l.json", "r") as file:
+                tasks = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("No tasks found.")
+            return
+
+        if not tasks:
+            print("No tasks available.")
+            return
+
+        filter_status = line.strip().lower()
+        found = False
+        for task in tasks:
+            if filter_status:
+                if task.get("status", "").lower() == filter_status:
+                    print("ID: {0}, Description: {1}, Status: {2}, CreatedAt: {3}, UpdatedAt: {4}".format(
+                        task.get('id'),
+                        task.get('description'),
+                        task.get('status'),
+                        task.get('createdAt'),
+                        task.get('updatedAt')
+                    ))
+                    found = True
+            else:
+                print("ID: {0}, Description: {1}, Status: {2}, CreatedAt: {3}, UpdatedAt: {4}".format(
+                    task.get('id'),
+                    task.get('description'),
+                    task.get('status'),
+                    task.get('createdAt'),
+                    task.get('updatedAt')
+                ))
+                found = True
+        if filter_status and not found:
+            print("No tasks with status '{0}' found.".format(filter_status))
+
+
+if __name__ == '__main__':
+    MyCLITaskTracker().cmdloop()
 
     #these functions are used to list all tasks, done tasks, not done tasks, and in progress tasks
     #I think they could b more efficient ngl
+
+    
+    
