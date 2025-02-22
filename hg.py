@@ -31,8 +31,8 @@ class MyCLITaskTracker(cmd.Cmd):
             
             status = remaining.split()[0]
         else:
-            status = "todo"
-
+            status = "todo"#defalt status
+        #the above is me spliting the input so it can be processed
         
         try:
             with open("l.json", "r") as file:
@@ -43,10 +43,10 @@ class MyCLITaskTracker(cmd.Cmd):
         
         max_id = 0
         for task in tasks:
-            if "id" in task and isinstance(task["id"], int):
-                if task["id"] > max_id:
+            if "id" in task and isinstance(task["id"], int):#only way I was able to get this loop working correctly
+                if task["id"] > max_id:#it checks if id is in task and that it is an integer
                     max_id = task["id"]
-        new_id = max_id + 1
+        new_id = max_id + 1#no matter what id is atleast 1
         createdAt = str(datetime.datetime.now())
 
         new_task = {
@@ -59,7 +59,7 @@ class MyCLITaskTracker(cmd.Cmd):
         tasks.append(new_task)
 
         with open("l.json", "w") as file:
-            json.dump(tasks, file, indent=2)
+            json.dump(tasks, file, indent=2)#write to json file
 
         print(f"Task added successfully (ID: {new_id})")
 
@@ -72,7 +72,7 @@ class MyCLITaskTracker(cmd.Cmd):
         """
         
         parts = line.split('"')
-        if len(parts) < 3:
+        if len(parts) < 3:#there have to be 3 parts to th input from line
             print('Usage: update <id> "New description"')
             return
 
@@ -243,11 +243,11 @@ class MyCLITaskTracker(cmd.Cmd):
             print("No tasks found.")
             return
 
-        if not tasks:
+        if not tasks:#no tasks available
             print("No tasks available.")
             return
 
-        filter_status = line.strip().lower()
+        filter_status = line.strip().lower()#easier to process stuff if its all 1 case
         found = False
         for task in tasks:
             if filter_status:
@@ -277,7 +277,7 @@ if __name__ == '__main__':
     MyCLITaskTracker().cmdloop()
 
     #these functions are used to list all tasks, done tasks, not done tasks, and in progress tasks
-    #I think they could b more efficient ngl
+    #I think they could be more efficient ngl
 
     
     
